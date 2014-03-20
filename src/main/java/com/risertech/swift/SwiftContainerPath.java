@@ -15,7 +15,7 @@ public class SwiftContainerPath extends AbstractSwiftContainerPath {
 	}
 
 	@Override
-	public Path getRoot() {
+	public AbstractSwiftPath getRoot() {
 		return this;
 	}
 

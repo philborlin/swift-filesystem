@@ -80,7 +80,8 @@ public class SwiftFileSystemProvider extends FileSystemProvider {
 		} else if (path instanceof SwiftFilePath) {
 			((SwiftFilePath) path).getStoredObject().delete();
 		} else if (path instanceof SwiftDirectoryPath) {
-			((SwiftDirectoryPath) path).getContainer().list(arg0, arg1, arg2)
+			// TODO Delete all paths in the directory
+//			((SwiftDirectoryPath) path).getContainer().list(arg0, arg1, arg2)
 		} else {
 			throw new IOException("Unsupported path type");
 		}
@@ -167,7 +168,7 @@ public class SwiftFileSystemProvider extends FileSystemProvider {
 			
 			ArrayList<Path> paths = new ArrayList<Path>();
 			for (StoredObject storedObject: storedObjects) {
-				Path potentialPath = new SwiftFilePath(path.getFileSystem(), storedObject);
+				Path potentialPath = new SwiftFilePath(path.getFileSystem(), path.getContainer(), storedObject);
 				try {
 					if (filter.accept(potentialPath)) {
 						paths.add(potentialPath);

@@ -35,7 +35,7 @@ public abstract class AbstractSwiftPath implements Path {
 	}
 
 	@Override
-	public Path getRoot() {
+	public AbstractSwiftPath getRoot() {
 		return null;
 	}
 
@@ -62,12 +62,12 @@ public abstract class AbstractSwiftPath implements Path {
 		}
 	}
 
-	public Path getName(int index) {
+	public AbstractSwiftPath getName(int index) {
 		return subpath(index, index);
 	}
 
 	@Override
-	public Path subpath(int beginIndex, int endIndex) {
+	public AbstractSwiftPath subpath(int beginIndex, int endIndex) {
 		String path = getPath();
 		int nameCount = getNameCount();
 		
@@ -106,8 +106,7 @@ public abstract class AbstractSwiftPath implements Path {
 		}
 		
 		for (int index = 0; index < otherPath.length; index++) {
-			// TODO We are depending on toString()
-			if (getName(index).toString() != otherPath[index]) {
+			if (getName(index).getPath() != otherPath[index]) {
 				return false;
 			}
 		}
@@ -136,8 +135,7 @@ public abstract class AbstractSwiftPath implements Path {
 		int lastOtherIndex = otherPath.length - 1;
 		
 		for (int index = 0; index < otherPath.length; index++) {
-			// TODO We are depending on toString()
-			if (getName(lastIndex - index).toString() != otherPath[lastOtherIndex - index]) {
+			if (getName(lastIndex - index).getPath() != otherPath[lastOtherIndex - index]) {
 				return false;
 			}
 		}
