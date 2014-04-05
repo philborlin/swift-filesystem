@@ -3,7 +3,6 @@ package com.risertech.swift;
 import java.io.IOError;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.FileSystem;
 import java.nio.file.Path;
 
 import org.javaswift.joss.model.Container;
@@ -11,7 +10,7 @@ import org.javaswift.joss.model.Container;
 public abstract class AbstractSwiftContainerPath extends AbstractSwiftPath {
 	private Container container;
 
-	protected AbstractSwiftContainerPath(FileSystem fileSystem, Container container) {
+	protected AbstractSwiftContainerPath(SwiftFileSystem fileSystem, Container container) {
 		super(fileSystem);
 		this.container = container;
 	}

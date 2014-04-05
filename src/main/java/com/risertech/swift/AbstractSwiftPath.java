@@ -1,9 +1,10 @@
 package com.risertech.swift;
 
 import java.io.File;
+import java.io.IOError;
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.FileSystem;
+import java.net.URISyntaxException;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.WatchEvent.Kind;
@@ -16,16 +17,29 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
+import org.javaswift.joss.model.Container;
+import org.javaswift.joss.model.StoredObject;
 
 public abstract class AbstractSwiftPath implements Path {
-	private FileSystem fileSystem;
+	private SwiftFileSystem fileSystem;
 
-	protected AbstractSwiftPath(FileSystem fileSystem) {
+	protected AbstractSwiftPath(SwiftFileSystem fileSystem) {
 		this.fileSystem = fileSystem;
+	}
+	
+	StoredObject getStoredObject() {
+		SwiftUri uri = new SwiftUri(toUri());
+		Container container = getFileSystem().getAccount().getContainer(uri.getContainer());
+		return container.getObject(uri.getPath());
+	}
+	
+	Container getContainer() {
+		SwiftUri uri = new SwiftUri(toUri());
+		return getFileSystem().getAccount().getContainer(uri.getContainer());
 	}
 
 	@Override
-	public FileSystem getFileSystem() {
+	public SwiftFileSystem getFileSystem() {
 		return fileSystem;
 	}
 
@@ -144,13 +158,13 @@ public abstract class AbstractSwiftPath implements Path {
 	}
 
 	@Override
-	public Path normalize() {
-		// TODO This does not support non-normalized paths yet
+	public AbstractSwiftPath normalize() {
+		// TODO Support /../path notation
 		return this;
 	}
 
 	@Override
-	public Path resolve(Path other) {
+	public AbstractSwiftPath resolve(Path other) {
 		if (other instanceof AbstractSwiftPath) {
 			return resolve(((AbstractSwiftPath) other).getPath());
 		}
@@ -159,38 +173,43 @@ public abstract class AbstractSwiftPath implements Path {
 	}
 
 	@Override
-	public Path resolve(String other) {
+	public AbstractSwiftPath resolve(String other) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public Path resolveSibling(Path other) {
+	public AbstractSwiftPath resolveSibling(Path other) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public Path resolveSibling(String other) {
+	public AbstractSwiftPath resolveSibling(String other) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public Path relativize(Path other) {
+	public AbstractSwiftPath relativize(Path other) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public URI toUri() {
-		throw new UnsupportedOperationException();
+		if (!isAbsolute()) throw new IllegalStateException("Non absolute paths cannot be resolved to URIs");
+		
+		try {
+			return new URI(getFileSystem().getUri().toString() + normalize().getPath());
+		} catch (URISyntaxException e) {
+			throw new IOError(e);
+		}
 	}
 
 	@Override
-	public Path toAbsolutePath() {
-		// TODO Auto-generated method stub
-		return null;
+	public AbstractSwiftPath toAbsolutePath() {
+		throw new UnsupportedOperationException("There is no default container to resolve this against.");
 	}
 
 	@Override

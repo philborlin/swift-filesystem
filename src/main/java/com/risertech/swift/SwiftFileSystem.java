@@ -1,6 +1,7 @@
 package com.risertech.swift;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
@@ -22,14 +23,24 @@ import org.javaswift.joss.model.Container;
  */
 public class SwiftFileSystem extends FileSystem {
 	private final FileSystemProvider fileSystemProvider;
+	private URI uri;
 	private final Account account;
 	private final SwiftFileStore fileStore;
 	private Boolean closed = false;
 
-	protected SwiftFileSystem(FileSystemProvider fileSystemProvider, Account account) {
+	protected SwiftFileSystem(FileSystemProvider fileSystemProvider, URI uri, Account account) {
 		this.fileSystemProvider = fileSystemProvider;
+		this.uri = uri;
 		this.account = account;
 		fileStore = new SwiftFileStore(account);
+	}
+	
+	URI getUri() {
+		return uri;
+	}
+	
+	Account getAccount() {
+		return account;
 	}
 	
 	@Override
@@ -75,6 +86,10 @@ public class SwiftFileSystem extends FileSystem {
 		fileStores.add(fileStore);
 		return fileStores;
 	}
+	
+	SwiftFileStore getFileStore() {
+		return fileStore;
+	}
 
 	@Override
 	public Set<String> supportedFileAttributeViews() {
@@ -83,9 +98,14 @@ public class SwiftFileSystem extends FileSystem {
 	}
 
 	@Override
-	public Path getPath(String first, String... more) {
-		// TODO Auto-generated method stub
-		return null;
+	public AbstractSwiftPath getPath(String first, String... more) {
+		StringBuilder builder = new StringBuilder(first);
+		for (String next : more) {
+			if (!next.startsWith("/")) builder.append("/");
+			builder.append(next);
+		}
+		
+		return new SwiftPath(this, builder.toString());
 	}
 
 	@Override
