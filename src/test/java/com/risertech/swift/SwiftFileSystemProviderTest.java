@@ -6,6 +6,8 @@ import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.util.Map;
 
@@ -87,5 +89,14 @@ public class SwiftFileSystemProviderTest {
 		provider.copy(source, target);
 		
 		Assert.assertArrayEquals(expectedBytes, getBytesFromPath(target));
+	}
+	
+	@Test
+	public void service() throws IOException, URISyntaxException {
+		FileSystem newFileSystem = FileSystems.newFileSystem(new URI(basicFileySystemUriString), env);
+		Assert.assertTrue(newFileSystem instanceof SwiftFileSystem);
+		
+		FileSystem getFileSystem = FileSystems.getFileSystem(new URI(basicFileySystemUriString));
+		Assert.assertEquals(newFileSystem, getFileSystem);
 	}
 }
