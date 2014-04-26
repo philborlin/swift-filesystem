@@ -22,4 +22,9 @@ public class SwiftPath extends AbstractSwiftPath {
 	public String toString() {
 		return path.toString();
 	}
+	
+	@Override
+	public AbstractSwiftPath resolve(String other) {
+		return new SwiftPath(getFileSystem(), getPath() + (getPath().endsWith("/") ? "" : "/") + other);
+	}
 }

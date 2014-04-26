@@ -10,6 +10,7 @@ public class SwiftEnvironmentBuilder {
 	private String preferredRegion;
 	private String hashPassword;
 	private AuthenticationMethod authenticationMethod;
+	private boolean testing = false;
 
 	public SwiftEnvironmentBuilder setPassword(String password) {
 		this.password = password;
@@ -41,6 +42,11 @@ public class SwiftEnvironmentBuilder {
 		return this;
 	}
 	
+	public SwiftEnvironmentBuilder setTesting() {
+		testing = true;
+		return this;
+	}
+	
 	public Map<String, Object> build() {
 		Map<String, Object> map = new HashMap<String, Object>();
 		
@@ -50,6 +56,7 @@ public class SwiftEnvironmentBuilder {
 		map.put(SwiftFileSystemProvider.PREFERRED_REGION, preferredRegion);
 		map.put(SwiftFileSystemProvider.HASH_PASSWORD, hashPassword);
 		map.put(SwiftFileSystemProvider.AUTHENTICATION_METHOD, authenticationMethod);
+		map.put(SwiftFileSystemProvider.MOCK, testing);
 		
 		return map;
 	}

@@ -32,6 +32,7 @@ import java.util.Set;
 
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.javaswift.joss.client.factory.AccountFactory;
+import org.javaswift.joss.model.Account;
 import org.javaswift.joss.model.Container;
 import org.javaswift.joss.model.StoredObject;
 
@@ -45,6 +46,7 @@ public class SwiftFileSystemProvider extends FileSystemProvider {
 	@SuppressWarnings("unused")
 	private static ServiceLoader<FileSystemProvider> fileSystemProviderLoader = ServiceLoader.load(FileSystemProvider.class);
 	
+	static final String ACCOUNT = "account";
 	static final String PASSWORD = "password";
 	static final String AUTH_URL = "authUrl";
 	static final String SOCKET_TIMEOUT = "socketTimeout";
@@ -90,18 +92,26 @@ public class SwiftFileSystemProvider extends FileSystemProvider {
 		}
 		if (!swiftUri.getVersion().equals("v1")) throw new IllegalArgumentException("This provider only supports version 1");
 		
-		AccountFactory accountFactory = new AccountFactory();
-		accountFactory.setTenantName(swiftUri.getTenant());
-		accountFactory.setUsername(uri.getUserInfo());
-		accountFactory.setPassword((String) env.get(PASSWORD));
-		accountFactory.setAuthUrl((String) env.get(AUTH_URL));
-		accountFactory.setSocketTimeout((Integer) env.get(SOCKET_TIMEOUT));
-		accountFactory.setPreferredRegion((String) env.get(PREFERRED_REGION));
-		accountFactory.setHashPassword((String) env.get(HASH_PASSWORD));
-		accountFactory.setAuthenticationMethod(convert((AuthenticationMethod) env.get(AUTHENTICATION_METHOD)));
-		accountFactory.setMock((Boolean) env.get(MOCK));
+		Account account;
+		if (env.get(ACCOUNT) != null) {
+			account = (Account) env.get(ACCOUNT);
+		} else {
+			AccountFactory accountFactory = new AccountFactory();
+			
+			accountFactory.setTenantName(swiftUri.getTenant());
+			accountFactory.setUsername(uri.getUserInfo());
+			accountFactory.setPassword((String) env.get(PASSWORD));
+			accountFactory.setAuthUrl((String) env.get(AUTH_URL));
+			accountFactory.setSocketTimeout((Integer) env.get(SOCKET_TIMEOUT));
+			accountFactory.setPreferredRegion((String) env.get(PREFERRED_REGION));
+			accountFactory.setHashPassword((String) env.get(HASH_PASSWORD));
+			accountFactory.setAuthenticationMethod(convert((AuthenticationMethod) env.get(AUTHENTICATION_METHOD)));
+			accountFactory.setMock((Boolean) env.get(MOCK));
+			
+			account = accountFactory.createAccount();
+		}
 		
-		SwiftFileSystem fileSystem = new SwiftFileSystem(this, uri, accountFactory.createAccount());
+		SwiftFileSystem fileSystem = new SwiftFileSystem(this, uri, account);
 		cache.put(uri, fileSystem);
 		
 		return fileSystem;
@@ -166,16 +176,7 @@ public class SwiftFileSystemProvider extends FileSystemProvider {
 
 	@Override
 	public void delete(Path path) throws IOException {
-		if (path instanceof SwiftContainerPath) {
-			((SwiftContainerPath) path).getContainer().delete();
-		} else if (path instanceof SwiftFilePath) {
-			((SwiftFilePath) path).getStoredObject().delete();
-		} else if (path instanceof SwiftDirectoryPath) {
-			// TODO Delete all paths in the directory
-//			((SwiftDirectoryPath) path).getContainer().list(arg0, arg1, arg2)
-		} else {
-			throw new IOException("Unsupported path type");
-		}
+		((AbstractSwiftPath) path).delete();
 	}
 
 	@Override
@@ -225,8 +226,9 @@ public class SwiftFileSystemProvider extends FileSystemProvider {
 
 	@Override
 	public void checkAccess(Path path, AccessMode... modes) throws IOException {
-		// TODO Auto-generated method stub
+		checkExists(path);
 		
+		// TODO Auto-generated method stub
 	}
 
 	@Override
@@ -234,23 +236,34 @@ public class SwiftFileSystemProvider extends FileSystemProvider {
 		// TODO Auto-generated method stub
 		return null;
 	}
+	
+	private void checkExists(Path path) throws IOException {
+		if (!((AbstractSwiftPath) path).exists()) {
+			throw new IOException("Path does not exist");
+		}
+	}
 
 	@Override
 	public <A extends BasicFileAttributes> A readAttributes(Path path, Class<A> type, LinkOption... options) throws IOException {
+		checkExists(path);
+		
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public Map<String, Object> readAttributes(Path path, String attributes, LinkOption... options) throws IOException {
+		checkExists(path);
+		
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public void setAttribute(Path path, String attribute, Object value, LinkOption... options) throws IOException {
-		// TODO Auto-generated method stub
+		checkExists(path);
 		
+		// TODO Auto-generated method stub
 	}
 	
 	public class ContainerStream implements DirectoryStream<Path> {

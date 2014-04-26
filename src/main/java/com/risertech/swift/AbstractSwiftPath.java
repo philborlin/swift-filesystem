@@ -37,6 +37,24 @@ public abstract class AbstractSwiftPath implements Path {
 		SwiftUri uri = new SwiftUri(toUri());
 		return getFileSystem().getAccount().getContainer(uri.getContainer());
 	}
+	
+	protected void delete() throws IOException {
+		SwiftUri uri = new SwiftUri(toUri());
+		
+		try {
+			if (uri.hasPath()) {
+				getStoredObject().delete();
+			} else {
+				getContainer().delete();
+			}
+		} catch (Throwable t) {
+			throw new IOException("File does not exist", t);
+		}
+	}
+	
+	protected boolean exists() {
+		return getStoredObject().exists();
+	}
 
 	@Override
 	public SwiftFileSystem getFileSystem() {

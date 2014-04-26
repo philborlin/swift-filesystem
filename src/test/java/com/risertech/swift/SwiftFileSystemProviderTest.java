@@ -11,6 +11,8 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.util.Map;
 
+import org.javaswift.joss.client.factory.AccountFactory;
+import org.javaswift.joss.model.Account;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -20,13 +22,16 @@ public class SwiftFileSystemProviderTest {
 	String basicFileySystemUriString = "swift://localhost/v1/tentant";
 	byte[] expectedBytes = new byte[] { 1, 2, 3, 4 };
 	Map<String, Object> env;
+	Account account;
 	SwiftFileSystemProvider provider;
 	SwiftFileSystem basicFileSystem;
 	
 	@Before
 	public void setup() throws IOException, URISyntaxException {
+		// TODO Test the SwiftEnvironmentBuilder
+		account = new AccountFactory().setMock(true).createAccount();
 		env = new SwiftEnvironmentBuilder().build();
-		env.put(SwiftFileSystemProvider.MOCK, true);
+		env.put(SwiftFileSystemProvider.ACCOUNT, account);
 		provider = new SwiftFileSystemProvider();
 		basicFileSystem = provider.newFileSystem(new URI(basicFileySystemUriString), env);
 	}
@@ -98,5 +103,65 @@ public class SwiftFileSystemProviderTest {
 		
 		FileSystem getFileSystem = FileSystems.getFileSystem(new URI(basicFileySystemUriString));
 		Assert.assertEquals(newFileSystem, getFileSystem);
+	}
+	
+	@Test
+	public void resolve() throws IOException {
+		AbstractSwiftPath path = createPathWithDefaultContent("/container", "test1").resolve("resolved");
+		Assert.assertEquals("/container/test1/resolved", path.getPath());
+	}
+	
+	@Test
+	public void exists() throws IOException {
+		AbstractSwiftPath existingPath = createPathWithDefaultContent("/container", "test1");
+		AbstractSwiftPath nonExistingPath = existingPath.resolve("doesNotExist");
+		// TODO Test directory exists
+		
+		Assert.assertTrue(Files.exists(existingPath));
+		Assert.assertFalse(Files.exists(nonExistingPath));
+	}
+	
+	@Test
+	public void deleteFileThatExists() throws IOException {
+		AbstractSwiftPath path = createPathWithDefaultContent("/container", "test1");
+		Files.delete(path);
+		Assert.assertFalse(Files.exists(path));
+	}
+	
+	@Test
+	public void deleteFileThatDoesNotExists() throws IOException {
+		AbstractSwiftPath path = basicFileSystem.getPath("/container", "test1");
+		try {
+			Files.delete(path);
+			Assert.fail("Should throw an exception when deleting a file that does not exist");
+		} catch (IOException e) {
+		}
+	}
+	
+	@Test
+	public void createContainer() throws IOException {
+		Assert.assertFalse(account.getContainer("container").exists());
+		Files.createFile(basicFileSystem.getPath("/container"));
+		Assert.assertTrue(account.getContainer("container").exists());
+	}
+	
+	@Test
+	public void deleteContainerThatExists() throws IOException {
+		account.getContainer("container").create();
+		Assert.assertTrue(account.getContainer("container").exists());
+		Files.delete(basicFileSystem.getPath("/container"));
+		Assert.assertFalse(account.getContainer("container").exists());
+	}
+	
+	@Test
+	public void deleteContainerThatDoesNotExists() throws IOException {
+		AbstractSwiftPath path = basicFileSystem.getPath("/container");
+		Assert.assertFalse(account.getContainer("container").exists());
+		
+		try {
+			Files.delete(path);
+			Assert.fail("Should throw an exception when deleting a file that does not exist");
+		} catch (IOException e) {
+		}
 	}
 }

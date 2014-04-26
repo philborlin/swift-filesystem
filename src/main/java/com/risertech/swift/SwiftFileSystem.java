@@ -22,13 +22,13 @@ import org.javaswift.joss.model.Container;
  * @author phil
  */
 public class SwiftFileSystem extends FileSystem {
-	private final FileSystemProvider fileSystemProvider;
+	private final SwiftFileSystemProvider fileSystemProvider;
 	private URI uri;
 	private final Account account;
 	private final SwiftFileStore fileStore;
 	private Boolean closed = false;
 
-	protected SwiftFileSystem(FileSystemProvider fileSystemProvider, URI uri, Account account) {
+	protected SwiftFileSystem(SwiftFileSystemProvider fileSystemProvider, URI uri, Account account) {
 		this.fileSystemProvider = fileSystemProvider;
 		this.uri = uri;
 		this.account = account;
