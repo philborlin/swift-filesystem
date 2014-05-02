@@ -6,9 +6,13 @@ import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
+import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import org.javaswift.joss.client.factory.AccountFactory;
@@ -164,4 +168,97 @@ public class SwiftFileSystemProviderTest {
 		} catch (IOException e) {
 		}
 	}
+	
+	@Test
+	public void listDirectory() throws IOException {
+		AbstractSwiftPath path1 = createPathWithDefaultContent("/container", "dir/test1");
+		AbstractSwiftPath path2 = createPathWithDefaultContent("/container", "dir/test2");
+		
+		AbstractSwiftPath dir = basicFileSystem.getPath("/container", "dir/");
+		
+		List<SwiftPath> files = directoryStreamToList(Files.newDirectoryStream(dir));
+		Assert.assertEquals(2, files.size());
+		Assert.assertTrue(files.contains(path1));
+		Assert.assertTrue(files.contains(path2));
+	}
+	
+	@Test
+	public void deleteDirectory() throws IOException {
+		AbstractSwiftPath path1 = createPathWithDefaultContent("/container", "dir/test1");
+		Assert.assertTrue(Files.exists(path1));
+		AbstractSwiftPath path2 = createPathWithDefaultContent("/container", "dir/test2");
+		Assert.assertTrue(Files.exists(path2));
+		
+		AbstractSwiftPath dir = basicFileSystem.getPath("/container", "dir/");
+		Files.delete(dir);
+		
+		Assert.assertFalse(Files.exists(path1));
+		Assert.assertFalse(Files.exists(path2));
+	}
+	
+	private List<SwiftPath> directoryStreamToList(DirectoryStream<Path> directoryStream) {
+		List<SwiftPath> list = new ArrayList<SwiftPath>();
+		for (Path path : directoryStream) {
+			list.add((SwiftPath) path);
+		}
+		return list;
+	}
+	
+	@Test
+	public void directoryEndsWithASlash() throws IOException {
+		AbstractSwiftPath path = createPathWithDefaultContent("/container", "dir/test1");
+		Assert.assertTrue(Files.exists(path));
+		
+		AbstractSwiftPath dir = basicFileSystem.getPath("/container", "/");
+		List<SwiftPath> files = directoryStreamToList(Files.newDirectoryStream(dir));
+		Assert.assertEquals(1, files.size());
+		Assert.assertTrue(files.get(0).getPath().endsWith("/"));
+	}
+	
+	@Test
+	public void directoryIsADirectory() throws IOException {
+		AbstractSwiftPath path = createPathWithDefaultContent("/container", "dir/test1");
+		Assert.assertTrue(Files.exists(path));
+		
+		AbstractSwiftPath dir = basicFileSystem.getPath("/container", "/");
+		List<SwiftPath> files = directoryStreamToList(Files.newDirectoryStream(dir));
+		Assert.assertEquals(1, files.size());
+		Assert.assertTrue(Files.isDirectory(files.get(0)));
+	}
+	
+	@Test
+	public void listDirectoryReturnsSubdirectories() throws IOException {
+		AbstractSwiftPath path1 = createPathWithDefaultContent("/container", "dir1/test1");
+		Assert.assertTrue(Files.exists(path1));
+		AbstractSwiftPath path2 = createPathWithDefaultContent("/container", "dir2/test1");
+		Assert.assertTrue(Files.exists(path2));
+		
+		AbstractSwiftPath dir = basicFileSystem.getPath("/container", "/");
+		AbstractSwiftPath dir1 = basicFileSystem.getPath("/container", "dir1/");
+		AbstractSwiftPath dir2 = basicFileSystem.getPath("/container", "dir2/");
+		
+		List<SwiftPath> files = directoryStreamToList(Files.newDirectoryStream(dir));
+		Assert.assertEquals(2, files.size());
+		Assert.assertTrue(files.contains(dir1));
+		Assert.assertTrue(files.contains(dir2));
+		
+//		for (Path path : Files.newDirectoryStream(dir)) {
+//			Assert.assertTrue(path.equals(dir1) || path.equals(dir2));
+//		}
+	}
+	
+	@Test
+	public void listDirectoryDoesNotReturnFilesTwoDirectoriesDeep() throws IOException {
+		AbstractSwiftPath path1 = createPathWithDefaultContent("/container", "dir1/test1");
+		Assert.assertTrue(Files.exists(path1));
+		
+		AbstractSwiftPath dir = basicFileSystem.getPath("/container", "/");
+		AbstractSwiftPath dir1 = basicFileSystem.getPath("/container", "dir1/");
+		
+		List<SwiftPath> files = directoryStreamToList(Files.newDirectoryStream(dir));
+		Assert.assertEquals(1, files.size());
+		Assert.assertTrue(files.get(0).equals(dir1));
+	}
+	
+	// TODO Create, delete, and list directories
 }

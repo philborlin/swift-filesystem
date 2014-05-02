@@ -26,14 +26,15 @@ public abstract class AbstractSwiftContainerPath extends AbstractSwiftPath {
 	
 	@Override
 	public Path getParent() {
-		String pathName = getPath();
-		
-		int lastIndex = pathName.lastIndexOf('/');
-		if (lastIndex > -1) {
-			return new SwiftDirectoryPath(getFileSystem(), getContainer(), pathName.substring(0, lastIndex));
-		} else {
-			return getRoot();			
-		}
+//		String pathName = getPath();
+//		
+//		int lastIndex = pathName.lastIndexOf('/');
+//		if (lastIndex > -1) {
+//			return new SwiftDirectoryPath(getFileSystem(), getContainer(), pathName.substring(0, lastIndex));
+//		} else {
+//			return getRoot();			
+//		}
+		return null;
 	}
 	
 	@Override

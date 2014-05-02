@@ -27,15 +27,42 @@ public abstract class AbstractSwiftPath implements Path {
 		this.fileSystem = fileSystem;
 	}
 	
+	SwiftUri getSwiftUri() {
+		return new SwiftUri(toUri());
+	}
+	
 	StoredObject getStoredObject() {
-		SwiftUri uri = new SwiftUri(toUri());
-		Container container = getFileSystem().getAccount().getContainer(uri.getContainer());
-		return container.getObject(uri.getPath());
+		return getStoredObject(getSwiftUri());
+	}
+	
+	StoredObject getStoredObject(SwiftUri uri) {
+		return getContainer(uri).getObject(uri.getPath());
 	}
 	
 	Container getContainer() {
-		SwiftUri uri = new SwiftUri(toUri());
+		return getContainer(getSwiftUri());
+	}
+	
+	Container getContainer(SwiftUri uri) {
 		return getFileSystem().getAccount().getContainer(uri.getContainer());
+	}
+	
+	boolean isContainer() {
+		SwiftUri uri = getSwiftUri();
+		return uri.hasContainer() && !uri.hasPath();
+	}
+	
+	boolean isRelative() {
+		SwiftUri uri = getSwiftUri();
+		return !uri.hasContainer() || !uri.getPath().startsWith("/");
+	}
+	
+	boolean isDirectory() {
+		return !isRelative() && getSwiftUri().getPath().endsWith("/");
+	}
+	
+	boolean isRegularFile() {
+		return !isRelative() && !isDirectory() && !isContainer();
 	}
 	
 	protected void delete() throws IOException {
@@ -53,7 +80,13 @@ public abstract class AbstractSwiftPath implements Path {
 	}
 	
 	protected boolean exists() {
-		return getStoredObject().exists();
+		if (isContainer()) {
+			return getContainer().exists();
+		} else if (isDirectory()) {
+			return true;
+		} else {
+			return getStoredObject().exists();
+		}
 	}
 
 	@Override

@@ -22,10 +22,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.spi.FileSystemProvider;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
@@ -159,11 +156,8 @@ public class SwiftFileSystemProvider extends FileSystemProvider {
 
 	@Override
 	public DirectoryStream<Path> newDirectoryStream(Path dir, Filter<? super Path> filter) throws IOException {
-		if (dir instanceof SwiftContainerPath) {
-			return new ContainerStream((SwiftContainerPath) dir, filter);
-		} else if (dir instanceof SwiftDirectoryPath) {
-			// TODO Handle this
-			return null;
+		if (dir instanceof SwiftPath) {
+			return ((SwiftPath) dir).list(filter);
 		} else {
 			throw new IOException("Unsupported path type");
 		}
@@ -243,12 +237,11 @@ public class SwiftFileSystemProvider extends FileSystemProvider {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public <A extends BasicFileAttributes> A readAttributes(Path path, Class<A> type, LinkOption... options) throws IOException {
 		checkExists(path);
-		
-		// TODO Auto-generated method stub
-		return null;
+		return (A) new SwiftFileAttributes((SwiftPath) path);
 	}
 
 	@Override
@@ -264,41 +257,6 @@ public class SwiftFileSystemProvider extends FileSystemProvider {
 		checkExists(path);
 		
 		// TODO Auto-generated method stub
-	}
-	
-	public class ContainerStream implements DirectoryStream<Path> {
-		private SwiftContainerPath path;
-		private Filter<? super Path> filter;
-
-		public ContainerStream(SwiftContainerPath path, Filter<? super Path> filter) {
-			this.path = path;
-			this.filter = filter;
-		}
-
-		@Override
-		public void close() throws IOException {
-		}
-
-		@Override
-		public Iterator<Path> iterator() {
-			// TODO Handle pagination if there are more than 9999
-			//		container.getCount();
-			Collection<StoredObject> storedObjects = path.getContainer().list();
-			
-			ArrayList<Path> paths = new ArrayList<Path>();
-			for (StoredObject storedObject: storedObjects) {
-				Path potentialPath = new SwiftFilePath(path.getFileSystem(), path.getContainer(), storedObject);
-				try {
-					if (filter.accept(potentialPath)) {
-						paths.add(potentialPath);
-					}
-				} catch (IOException ioe) {
-					throw new RuntimeException(ioe);
-				}
-			}
-			
-			return paths.iterator();
-		}
 	}
 	
 	class SwiftSeekableByteChannel implements SeekableByteChannel {

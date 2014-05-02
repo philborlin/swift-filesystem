@@ -23,6 +23,6 @@ crossPaths := false
 scalacOptions += "-target:jvm-1.7"
 
 libraryDependencies ++= Seq(
-  "org.javaswift" % "joss" % "0.9.4",
+  "org.javaswift" % "joss" % "0.9.7",
   "com.novocode" % "junit-interface" % "0.10" % "test"
 )     

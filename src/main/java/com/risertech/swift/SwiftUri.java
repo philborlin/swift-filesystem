@@ -10,6 +10,14 @@ public class SwiftUri {
 	private final String container;
 	private final String path;
 	
+	SwiftUri(URI fileSystemUri, String version, String tenant, String container, String path) {
+		this.fileSystemUri = fileSystemUri;
+		this.version = version;
+		this.tenant = tenant;
+		this.container = container;
+		this.path = path;
+	}
+	
 	public SwiftUri(URI uri) {
 		if (uri.getPath() != null) {
 			String[] pathParts = uri.getPath().substring(1).split("/");
@@ -18,16 +26,19 @@ public class SwiftUri {
 			tenant = pathParts.length >= 2 ? pathParts[1] : "";
 			container = pathParts.length >= 3 ? pathParts[2] : "";
 			
+			String potentialPath;
 			if (pathParts.length >= 4) {
 				StringBuffer buffer = new StringBuffer();
 				for (int index = 3; index < pathParts.length; index++) {
 					buffer.append("/");
 					buffer.append(pathParts[index]);
 				}
-				path = buffer.toString();
+				potentialPath = buffer.toString();
 			} else {
-				path = "";
+				potentialPath = "";
 			}
+			
+			path = potentialPath + (uri.getPath().endsWith("/") ? "/" : "");
 		} else {
 			version = tenant = container = path = "";
 		}
@@ -77,6 +88,19 @@ public class SwiftUri {
 	}
 	
 	public boolean hasPath() {
-		return path != "";
+		return !path.equals("");
+	}
+	
+	public SwiftUri copy(String container, String path) {
+		return new SwiftUri(fileSystemUri, version, tenant, container, path);
+	}
+	
+	public SwiftUri copy(String path) {
+		return copy(container, path);
+	}
+	
+	@Override
+	public String toString() {
+		return fileSystemUri.toString() + "/" + container + path;
 	}
 }
