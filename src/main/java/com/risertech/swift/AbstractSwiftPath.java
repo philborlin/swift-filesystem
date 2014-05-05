@@ -118,13 +118,14 @@ public abstract class AbstractSwiftPath implements Path {
 
 	public int getNameCount() {
 		String path = getPath();
-		int containerCount = 1;
-		int count = StringUtils.countMatches(path, ".");
-		if (path.startsWith("/")) {
-			return count + containerCount;
-		} else {
-			return count + containerCount + 1;
+		int count = StringUtils.countMatches(path, "/");
+		if (!path.startsWith("/")) {
+			count = count + 1;
 		}
+		if (path.endsWith("/")) {
+			count =  count - 1;
+		}
+		return count;
 	}
 
 	public AbstractSwiftPath getName(int index) {
@@ -145,11 +146,15 @@ public abstract class AbstractSwiftPath implements Path {
 		}
 		
 		if (beginIndex == endIndex && beginIndex == 0) {
-			return getRoot();
+			if (path.startsWith("/")) {
+				return getRoot();
+			} else {
+				return null;
+			}
 		} else {
 			// TODO Test and Fix the boundaries
 			List<String> paths = Arrays.asList(StringUtils.split(path, '/')).subList(beginIndex, endIndex);
-			return new SwiftRelativePath(getFileSystem(), StringUtils.join(paths, '/'));
+			return new SwiftPath(getFileSystem(), (path.startsWith("/") ? "/" : "") + StringUtils.join(paths, '/') + "/");
 		}
 	}
 

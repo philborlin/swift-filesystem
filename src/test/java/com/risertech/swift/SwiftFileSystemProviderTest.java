@@ -241,10 +241,6 @@ public class SwiftFileSystemProviderTest {
 		Assert.assertEquals(2, files.size());
 		Assert.assertTrue(files.contains(dir1));
 		Assert.assertTrue(files.contains(dir2));
-		
-//		for (Path path : Files.newDirectoryStream(dir)) {
-//			Assert.assertTrue(path.equals(dir1) || path.equals(dir2));
-//		}
 	}
 	
 	@Test
@@ -258,6 +254,79 @@ public class SwiftFileSystemProviderTest {
 		List<SwiftPath> files = directoryStreamToList(Files.newDirectoryStream(dir));
 		Assert.assertEquals(1, files.size());
 		Assert.assertTrue(files.get(0).equals(dir1));
+	}
+	
+	@Test
+	public void createDirectoryDoesNotFail() throws IOException {
+		AbstractSwiftPath dir = createPathWithDefaultContent("/container", "dir1/");
+		Files.createDirectories(dir);
+	}
+	
+	@Test
+	public void listingAnEmptyDirectoryGivesAnEmptyResult() throws IOException {
+		AbstractSwiftPath dir = createPathWithDefaultContent("/container", "dir1/");
+		List<SwiftPath> files = directoryStreamToList(Files.newDirectoryStream(dir));
+		Assert.assertEquals(0, files.size());
+	}
+	
+	@Test
+	public void deletingADirectoryNotOnTheServerDoesNotFail() throws IOException {
+		AbstractSwiftPath dir = createPathWithDefaultContent("/container", "dir1/");
+		Files.delete(dir);
+	}
+	
+	@Test
+	public void aDirectoryThatDoesNotExistOnTheServerStillReportsItExists() throws IOException {
+		AbstractSwiftPath dir = createPathWithDefaultContent("/container", "dir1/");
+		Files.exists(dir);
+	}
+	
+	@Test
+	public void getNameCount() throws IOException {
+		AbstractSwiftPath path1 = basicFileSystem.getPath("/container", "dir1/");
+		AbstractSwiftPath path2 = basicFileSystem.getPath("/container", "dir1/test1");
+		AbstractSwiftPath path3 = basicFileSystem.getPath("dir1/");
+		AbstractSwiftPath path4 = basicFileSystem.getPath("dir1");
+		
+		Assert.assertEquals(2, path1.getNameCount());
+		Assert.assertEquals(3, path2.getNameCount());
+		Assert.assertEquals(1, path3.getNameCount());
+		Assert.assertEquals(1, path4.getNameCount());
+	}
+	
+	@Test
+	public void getParentOfFile() throws IOException {
+		AbstractSwiftPath childPath = basicFileSystem.getPath("/container", "dir1/test1");
+		AbstractSwiftPath parentPath = basicFileSystem.getPath("/container", "dir1/");
+		
+		Assert.assertEquals(parentPath, childPath.getParent());
+	}
+	
+	@Test
+	public void getParentOfDirectory() throws IOException {
+		AbstractSwiftPath childPath = basicFileSystem.getPath("/container", "dir1/");
+		AbstractSwiftPath parentPath = basicFileSystem.getPath("/container", "");
+		
+		Assert.assertEquals(parentPath, childPath.getParent());
+	}
+	
+	@Test
+	public void getParentOfContainer() throws IOException {
+		AbstractSwiftPath childPath = basicFileSystem.getPath("/container");
+		AbstractSwiftPath parentPath = basicFileSystem.getPath("/");
+		AbstractSwiftPath root = childPath.getRoot();
+		
+		Assert.assertEquals(parentPath, childPath.getParent());
+		Assert.assertEquals(root, childPath.getParent());
+	}
+	
+	@Test
+	public void getParentOfRelativeFile() throws IOException {
+		AbstractSwiftPath childPath = basicFileSystem.getPath("relative/relative2");
+		AbstractSwiftPath parentPath = basicFileSystem.getPath("relative/");
+		
+		Assert.assertEquals(parentPath, childPath.getParent());
+		Assert.assertEquals(null, parentPath.getParent());
 	}
 	
 	// TODO Create, delete, and list directories

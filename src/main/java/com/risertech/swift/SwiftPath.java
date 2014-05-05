@@ -44,7 +44,7 @@ public class SwiftPath extends AbstractSwiftPath {
 		return new SwiftPath(getFileSystem(), getPath() + (getPath().endsWith("/") ? "" : "/") + other);
 	}
 	
-	public DirectoryStream<Path> list(Filter<? super Path> filter) {
+	DirectoryStream<Path> list(Filter<? super Path> filter) {
 		SwiftUri uri = getSwiftUri();
 		return new StoredObjectsStream(getContainer(uri), uri.getPath(), filter);
 	}
@@ -67,6 +67,11 @@ public class SwiftPath extends AbstractSwiftPath {
 		} else {
 			super.delete();
 		}
+	}
+	
+	@Override
+	public AbstractSwiftPath getRoot() {
+		return new SwiftPath(getFileSystem(), "/");
 	}
 	
 	public class StoredObjectsStream implements DirectoryStream<Path> {
@@ -96,20 +101,22 @@ public class SwiftPath extends AbstractSwiftPath {
 			for (StoredObject storedObject: storedObjects) {
 				String containerName = container != null ? "/" + container.getName() : "";
 				SwiftPath potentialPath = new SwiftPath(getFileSystem(), containerName + storedObject.getName());
-				try {
-					if (filter == null || filter.accept(potentialPath)) {
-						String prefix = containerName + pathWithoutContainer;
-						String restOfPath = potentialPath.path.substring(prefix.length());
-						if (!restOfPath.contains("/")) {
-							paths.add(potentialPath);
+				if (!potentialPath.equals(SwiftPath.this)) {
+					try {
+						if (filter == null || filter.accept(potentialPath)) {
+							String prefix = containerName + pathWithoutContainer;
+							String restOfPath = potentialPath.path.substring(prefix.length());
+							if (!restOfPath.contains("/")) {
+								paths.add(potentialPath);
+							}
+							Matcher matcher = pattern.matcher(restOfPath);
+							if (matcher.matches()) {
+								paths.add(new SwiftPath(getFileSystem(), prefix + matcher.group(1)));
+							}
 						}
-						Matcher matcher = pattern.matcher(restOfPath);
-						if (matcher.matches()) {
-							paths.add(new SwiftPath(getFileSystem(), prefix + matcher.group(1)));
-						}
+					} catch (IOException ioe) {
+						throw new RuntimeException(ioe);
 					}
-				} catch (IOException ioe) {
-					throw new RuntimeException(ioe);
 				}
 			}
 			
